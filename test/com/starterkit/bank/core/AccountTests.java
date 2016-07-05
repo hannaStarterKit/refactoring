@@ -1,4 +1,5 @@
 package com.starterkit.bank.core;
+
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
@@ -15,128 +16,127 @@ import com.starterkit.bank.methods.WithdrawMoney;
 
 public class AccountTests {
 
+	private static Currency PLN = Currency.getInstance("PLN");
+
 	@Test
 	public void shouldGetEmptyBalance() {
-		Account account = new Account();
-		Money balance = account.getBalance();
-		assertEquals(balance.amount, new BigDecimal("0"));
-		// TASK 0/1 - Is this above a correct way of triggering the assertion? Try to make it fail and see in the console output.
-	}
-
-	@Test
-	public void test_Balance_With_Non_Empty_Money_Transfer() {
-		// TASK 0/2 - the method name does not comply with the convention (proposed is the should instead of test and CamelCase)
-		Account account = new Account();
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
-		account.moneyTransferHistory.add(transfer);
-		Money balance = account.getBalance();
-		assertEquals(balance.amount, new BigDecimal("10"));
-		assertEquals(balance.currency, Currency.getInstance("PLN"));
-		// TASK 0/3 - There is a special convention in which the tests are being structured:
-		
 		// given
+		Account account = new Account();
+
 		// when
+		Money balance = account.getBalance();
+
 		// then
-		
-		// use it here
+		assertEquals(BigDecimal.ZERO, balance.amount);
 	}
-	
 
 	@Test
-	public void test_Balance_With_Non_Empty_Money_Transfer2() {
-		// TASK 0/4 - the method name to be repaired here too
+	public void shouldGiveBalanceForAccountWithOneBankTransfer() {
+		// given
 		Account account = new Account();
 		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
+		transfer.amount = new Money(new BigDecimal("10"), PLN);
 		account.moneyTransferHistory.add(transfer);
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
-		account.moneyTransferHistory.add(transfer);
+
+		// when
 		Money balance = account.getBalance();
-		assertEquals(balance.amount, new BigDecimal("20"));
-		assertEquals(balance.currency, Currency.getInstance("PLN"));
-		// TASK 0/5 - try to change the amounts in one of the 2 money transfers, see what happens
+
+		// then
+		assertEquals(BigDecimal.TEN, balance.amount);
+		assertEquals(PLN, balance.currency);
 	}
 
 	@Test
-	public void test_Balance_With_Non_Empty_Money_Transfer3() {
+	public void shouldGiveBalanceForAccountWithTwoBankTransfers() {
+		// given
 		Account account = new Account();
 		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
+		transfer.amount = new Money(new BigDecimal("10"), PLN);
 		account.moneyTransferHistory.add(transfer);
+
+		MoneyTransfer transfer2 = new MoneyTransfer();
+		transfer2.amount = new Money(new BigDecimal("12"), PLN);
+		account.moneyTransferHistory.add(transfer2);
+
+		// when
+		Money balance = account.getBalance();
+
+		// then
+		assertEquals(new BigDecimal("22"), balance.amount);
+		assertEquals(PLN, balance.currency);
+	}
+
+	@Test
+	public void shouldGiveBalanceForAccountWithTwoDifferentBankTransfers() {
+		// given
+		Account account = new Account();
+		MoneyTransfer transfer = new MoneyTransfer();
+		transfer.amount = new Money(new BigDecimal("10"), PLN);
+		account.moneyTransferHistory.add(transfer);
+
 		InternalMoneyTransfer transfer2 = new InternalMoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("13"), Currency.getInstance("PLN"));
+		transfer2.amount = new Money(new BigDecimal("13"), PLN);
 		account.internalTransferHistory.add(transfer2);
+
+		// when
 		Money balance = account.getBalance();
-		assertEquals(balance.amount, new BigDecimal("23"));
-		assertEquals(balance.currency, Currency.getInstance("PLN"));
+
+		// then
+		assertEquals(new BigDecimal("23"), balance.amount);
+		assertEquals(PLN, balance.currency);
 	}
-	
 
 	@Test
-	public void test_Balance_With_Non_Empty_Money_Transfer4() {
-		Account account = new Account();
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("1"), Currency.getInstance("PLN"));
-		account.moneyTransferHistory.add(transfer);
-		InternalMoneyTransfer transfer2 = new InternalMoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("2"), Currency.getInstance("PLN"));
-		account.internalTransferHistory.add(transfer2);
-		PayInMoney transfer3 = new PayInMoney();
-		transfer3.money = new Money(new BigDecimal("4"), Currency.getInstance("PLN"));
-		account.payTransferHistory.add(transfer3);
-		WithdrawMoney transfer4 = new WithdrawMoney();
-		transfer4.money = new Money(new BigDecimal("7"), Currency.getInstance("PLN"));
-		account.withdrawTransferHistory.add(transfer4);
-		// TASK 0/6 - What a mess, try to introduce the Builder pattern to repair the instantiation of the preconditions 
+	public void shouldGiveBalanceForAccountWithFourDifferentBankTransfers() {
+		// given
+		Account account = AccountBuilder.emptyAccount() //
+				.withPolishMoneyTransfer(1) //
+				.withPolishInternalMoneyTransfer(2) //
+				.withPolishPayInMoneyTransfer(4) //
+				.withPolishWithdrawMoneyTransfer(7) //
+				.build();
+
+		// when
 		Money balance = account.getBalance();
-		assertEquals(new BigDecimal("0"), balance.amount);
-		assertEquals(balance.currency, Currency.getInstance("PLN"));
+
+		// then
+		assertEquals(BigDecimal.ZERO, balance.amount);
+		assertEquals(PLN, balance.currency);
 	}
-	
 
 	@Test
 	public void test_Balance_With_Incomming_Outgoing_Transfers() {
-		Account account = new Account();
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("111"), Currency.getInstance("PLN"));
-		transfer.transferDirection = Direction.TO_ACCOUNT;
-		account.moneyTransferHistory.add(transfer);
-		// TASK 0/7 - would it also make sense to check the balance here too? but then the unit test would not comply with the given/when/then standard
-		MoneyTransfer transfer2 = new MoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("111"), Currency.getInstance("PLN"));
-		transfer2.transferDirection = Direction.FROM_ACCOUNT;
-		account.moneyTransferHistory.add(transfer2);
+		// given
+		Account account = AccountBuilder.emptyAccount() //
+				.withPolishMoneyTransfer(111, Direction.TO_ACCOUNT) //
+				.withPolishMoneyTransfer(111, Direction.FROM_ACCOUNT) //
+				.build();
+
+		// when
 		Money balance = account.getBalance();
-		assertEquals(new BigDecimal("0"), balance.amount);
-		assertEquals(balance.currency, Currency.getInstance("PLN"));
+
+		// then
+		assertEquals(BigDecimal.ZERO, balance.amount);
+		assertEquals(PLN, balance.currency);
 	}
 
 	@Test
 	public void testGetHistory() {
-		Account account = new Account(new IBAN("asdf"));
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
-		transfer.number = new IBAN("1111");
-		transfer.transferDirection = Direction.TO_ACCOUNT;
-		transfer.account = account;
-		account.moneyTransferHistory.add(transfer);
-		InternalMoneyTransfer transfer2 = new InternalMoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("14"), Currency.getInstance("PLN"));
-		transfer2.number = new IBAN("2222");
-		transfer2.transferDirection = Direction.FROM_ACCOUNT;
-		transfer2.account = account;
-		account.internalTransferHistory.add(transfer2);
-		PayInMoney transfer3 = new PayInMoney();
-		transfer3.money = new Money(new BigDecimal("4"), Currency.getInstance("PLN"));
-		transfer3.account = account;
-		account.payTransferHistory.add(transfer3);
-		// TASK 0/9 - the 2 above rows do basically a similar thing, but for the 2 different object perspectives. Placing a relation from Account to Transfer and from Transfer to account. It is better to do it in one place, as one can easy forget it, or corrupt by Copy Paste
-		WithdrawMoney transfer4 = new WithdrawMoney();
-		transfer4.money = new Money(new BigDecimal("7"), Currency.getInstance("PLN"));
-		transfer4.account = account;
-		account.withdrawTransferHistory.add(transfer4);
-		List<String> history= account.getHistory();
+		// given
+		Account account = AccountBuilder.accountForIBAN("asdf") //
+				.withPolishMoneyTransfer(10, Direction.TO_ACCOUNT, "1111") //
+				.withPolishInternalMoneyTransfer(14, Direction.FROM_ACCOUNT, "2222") //
+				.withPolishPayInMoneyTransfer(4).withPolishWithdrawMoneyTransfer(7).build();
+
+		// TASK 0/9 - the 2 above rows do basically a similar thing, but for the
+		// 2 different object perspectives. Placing a relation from Account to
+		// Transfer and from Transfer to account. It is better to do it in one
+		// place, as one can easy forget it, or corrupt by Copy Paste
+
+		// when
+		List<String> history = account.getHistory();
+
+		// then
 		assertEquals("FROM> 1111 TO> asdf AMOUNT> 10PLN", history.get(0));
 		assertEquals("FROM> asdf TO> 2222 AMOUNT> 14PLN", history.get(1));
 		assertEquals("PAID IN TO> asdf AMOUNT> 4PLN", history.get(2));
@@ -145,18 +145,16 @@ public class AccountTests {
 
 	@Test
 	public void testGetAverageTransaction() {
-		Account account = new Account(new IBAN("asdf"));
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
-		transfer.number = new IBAN("1111");
-		transfer.transferDirection = Direction.TO_ACCOUNT;
-		account.moneyTransferHistory.add(transfer);
-		InternalMoneyTransfer transfer2 = new InternalMoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("14"), Currency.getInstance("PLN"));
-		transfer2.number = new IBAN("2222");
-		transfer2.transferDirection = Direction.FROM_ACCOUNT;
-		account.internalTransferHistory.add(transfer2);
+		// given
+		Account account = AccountBuilder.accountForIBAN("asdf") //
+				.withPolishMoneyTransfer(10, Direction.TO_ACCOUNT, "1111") //
+				.withPolishInternalMoneyTransfer(14, Direction.FROM_ACCOUNT, "2222") //
+				.build();
+
+		// when
 		Money average = account.getAverageTransaction();
+
+		// then
 		assertEquals(new BigDecimal("12"), average.amount);
 	}
 
@@ -166,15 +164,91 @@ public class AccountTests {
 		// TASK 0/8 - This test does not work - something is no-yes
 		Account account = new Account(new IBAN("asdf"));
 		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), Currency.getInstance("PLN"));
+		transfer.amount = new Money(new BigDecimal("10"), PLN);
 		transfer.number = new IBAN("asdf");
 		account.moneyTransferHistory.add(transfer);
 		WithdrawMoney transfer4 = new WithdrawMoney();
-		transfer4.money = new Money(new BigDecimal("6"), Currency.getInstance("PLN"));
+		transfer4.money = new Money(new BigDecimal("6"), PLN);
 		transfer4.account = account;
 		account.withdrawTransferHistory.add(transfer4);
 		Money average = account.getAverageTransaction();
 		assertEquals(new BigDecimal("2"), average.amount);
+	}
+
+	private static class AccountBuilder {
+
+		private Account account;
+
+		private AccountBuilder() {
+		}
+
+		private AccountBuilder(Account account) {
+			this.account = account;
+		}
+
+		public AccountBuilder withPolishInternalMoneyTransfer(int amount) {
+			return withPolishInternalMoneyTransfer(amount, Direction.TO_ACCOUNT, null);
+		}
+
+		public AccountBuilder withPolishMoneyTransfer(int amount) {
+			return withPolishMoneyTransfer(amount, Direction.TO_ACCOUNT, null);
+		}
+
+		public AccountBuilder withPolishMoneyTransfer(int amount, Direction direction) {
+			return withPolishMoneyTransfer(amount, direction, null);
+		}
+
+		public AccountBuilder withPolishInternalMoneyTransfer(int amount, Direction direction, String otherIBANNumber) {
+			InternalMoneyTransfer transfer = new InternalMoneyTransfer();
+			transfer.amount = new Money(toBD(amount), PLN);
+			transfer.transferDirection = direction;
+			transfer.number = new IBAN(otherIBANNumber);
+			transfer.account = account;
+			account.internalTransferHistory.add(transfer);
+			return this;
+		}
+
+		public AccountBuilder withPolishWithdrawMoneyTransfer(int amount) {
+			WithdrawMoney transfer = new WithdrawMoney();
+			transfer.money = new Money(toBD(amount), PLN);
+			transfer.account = account;
+			account.withdrawTransferHistory.add(transfer);
+			return this;
+		}
+
+		public AccountBuilder withPolishPayInMoneyTransfer(int amount) {
+			PayInMoney transfer = new PayInMoney();
+			transfer.money = new Money(toBD(amount), PLN);
+			transfer.account = account;
+			account.payTransferHistory.add(transfer);
+			return this;
+		}
+
+		AccountBuilder withPolishMoneyTransfer(int amount, Direction direction, String otherIBANNumber) {
+			MoneyTransfer transfer = new MoneyTransfer();
+			transfer.amount = new Money(toBD(amount), PLN);
+			transfer.transferDirection = direction;
+			transfer.number = new IBAN(otherIBANNumber);
+			transfer.account = account;
+			account.moneyTransferHistory.add(transfer);
+			return this;
+		}
+
+		private BigDecimal toBD(int amount) {
+			return new BigDecimal("" + amount);
+		}
+
+		static AccountBuilder emptyAccount() {
+			return new AccountBuilder(new Account());
+		}
+
+		static AccountBuilder accountForIBAN(String iban) {
+			return new AccountBuilder(new Account(new IBAN(iban)));
+		}
+
+		Account build() {
+			return account;
+		}
 	}
 
 }
