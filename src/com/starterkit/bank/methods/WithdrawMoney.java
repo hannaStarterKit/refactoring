@@ -1,16 +1,26 @@
 package com.starterkit.bank.methods;
 
-import com.starterkit.bank.core.Account;
-import com.starterkit.bank.core.Money;
+import java.util.Currency;
 
-public class WithdrawMoney {
+import com.starterkit.bank.core.MoneyTransferDirection;
 
-	public Money money;
-	public Account account;
+public class WithdrawMoney extends AbstractTransfer {
 
+	public WithdrawMoney(String monetaryAmount, Currency currency) {
+		super(monetaryAmount, currency);
+	}
 
+	public WithdrawMoney() {
+		super();
+	}
+
+	@Override
+	public MoneyTransferDirection getTransferDirection() {
+		return MoneyTransferDirection.FROM_ACCOUNT;
+	}
+
+	@Override
 	public String asHistorical() {
-		// TASK 1/11 - Try to replace the return statement below with the String.format execution
-		return "FROM> " + account.number.number + " WITHDRAWN AMOUNT> "+ money.toString();
+		return String.format("FROM> %s WITHDRAWN AMOUNT> %s", account.getIBANNumber(), amount.toString());
 	}
 }

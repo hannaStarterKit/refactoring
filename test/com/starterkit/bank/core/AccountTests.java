@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.starterkit.bank.methods.InternalMoneyTransfer;
@@ -27,63 +26,58 @@ public class AccountTests {
 		Money balance = account.getBalance();
 
 		// then
-		assertEquals(BigDecimal.ZERO, balance.amount);
+		assertEquals(BigDecimal.ZERO, balance.getAmount());
 	}
 
 	@Test
 	public void shouldGiveBalanceForAccountWithOneBankTransfer() {
 		// given
 		Account account = new Account();
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), PLN);
-		account.moneyTransferHistory.add(transfer);
+		MoneyTransfer transfer = new MoneyTransfer("10", PLN);
+		account.addMoneyTransfer(transfer);
 
 		// when
 		Money balance = account.getBalance();
 
 		// then
-		assertEquals(BigDecimal.TEN, balance.amount);
-		assertEquals(PLN, balance.currency);
+		assertEquals(BigDecimal.TEN, balance.getAmount());
+		assertEquals(PLN, balance.getCurrency());
 	}
 
 	@Test
 	public void shouldGiveBalanceForAccountWithTwoBankTransfers() {
 		// given
 		Account account = new Account();
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), PLN);
-		account.moneyTransferHistory.add(transfer);
+		MoneyTransfer transfer = new MoneyTransfer("10", PLN);
+		account.addMoneyTransfer(transfer);
 
-		MoneyTransfer transfer2 = new MoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("12"), PLN);
-		account.moneyTransferHistory.add(transfer2);
+		MoneyTransfer transfer2 = new MoneyTransfer("12", PLN);
+		account.addMoneyTransfer(transfer2);
 
 		// when
 		Money balance = account.getBalance();
 
 		// then
-		assertEquals(new BigDecimal("22"), balance.amount);
-		assertEquals(PLN, balance.currency);
+		assertEquals(new BigDecimal("22"), balance.getAmount());
+		assertEquals(PLN, balance.getCurrency());
 	}
 
 	@Test
 	public void shouldGiveBalanceForAccountWithTwoDifferentBankTransfers() {
 		// given
 		Account account = new Account();
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), PLN);
-		account.moneyTransferHistory.add(transfer);
+		MoneyTransfer transfer = new MoneyTransfer("10", PLN);
+		account.addMoneyTransfer(transfer);
 
-		InternalMoneyTransfer transfer2 = new InternalMoneyTransfer();
-		transfer2.amount = new Money(new BigDecimal("13"), PLN);
-		account.internalTransferHistory.add(transfer2);
+		InternalMoneyTransfer transfer2 = new InternalMoneyTransfer("13", PLN);
+		account.addMoneyTransfer(transfer2);
 
 		// when
 		Money balance = account.getBalance();
 
 		// then
-		assertEquals(new BigDecimal("23"), balance.amount);
-		assertEquals(PLN, balance.currency);
+		assertEquals(new BigDecimal("23"), balance.getAmount());
+		assertEquals(PLN, balance.getCurrency());
 	}
 
 	@Test
@@ -100,38 +94,33 @@ public class AccountTests {
 		Money balance = account.getBalance();
 
 		// then
-		assertEquals(BigDecimal.ZERO, balance.amount);
-		assertEquals(PLN, balance.currency);
+		assertEquals(BigDecimal.ZERO, balance.getAmount());
+		assertEquals(PLN, balance.getCurrency());
 	}
 
 	@Test
 	public void test_Balance_With_Incomming_Outgoing_Transfers() {
 		// given
 		Account account = AccountBuilder.emptyAccount() //
-				.withPolishMoneyTransfer(111, Direction.TO_ACCOUNT) //
-				.withPolishMoneyTransfer(111, Direction.FROM_ACCOUNT) //
+				.withPolishMoneyTransfer(111, MoneyTransferDirection.TO_ACCOUNT) //
+				.withPolishMoneyTransfer(111, MoneyTransferDirection.FROM_ACCOUNT) //
 				.build();
 
 		// when
 		Money balance = account.getBalance();
 
 		// then
-		assertEquals(BigDecimal.ZERO, balance.amount);
-		assertEquals(PLN, balance.currency);
+		assertEquals(BigDecimal.ZERO, balance.getAmount());
+		assertEquals(PLN, balance.getCurrency());
 	}
 
 	@Test
 	public void testGetHistory() {
 		// given
 		Account account = AccountBuilder.accountForIBAN("asdf") //
-				.withPolishMoneyTransfer(10, Direction.TO_ACCOUNT, "1111") //
-				.withPolishInternalMoneyTransfer(14, Direction.FROM_ACCOUNT, "2222") //
+				.withPolishMoneyTransfer(10, MoneyTransferDirection.TO_ACCOUNT, "1111") //
+				.withPolishInternalMoneyTransfer(14, MoneyTransferDirection.FROM_ACCOUNT, "2222") //
 				.withPolishPayInMoneyTransfer(4).withPolishWithdrawMoneyTransfer(7).build();
-
-		// TASK 0/9 - the 2 above rows do basically a similar thing, but for the
-		// 2 different object perspectives. Placing a relation from Account to
-		// Transfer and from Transfer to account. It is better to do it in one
-		// place, as one can easy forget it, or corrupt by Copy Paste
 
 		// when
 		List<String> history = account.getHistory();
@@ -147,32 +136,34 @@ public class AccountTests {
 	public void testGetAverageTransaction() {
 		// given
 		Account account = AccountBuilder.accountForIBAN("asdf") //
-				.withPolishMoneyTransfer(10, Direction.TO_ACCOUNT, "1111") //
-				.withPolishInternalMoneyTransfer(14, Direction.FROM_ACCOUNT, "2222") //
+				.withPolishMoneyTransfer(10, MoneyTransferDirection.TO_ACCOUNT, "1111") //
+				.withPolishInternalMoneyTransfer(14, MoneyTransferDirection.TO_ACCOUNT, "2222") //
 				.build();
 
 		// when
 		Money average = account.getAverageTransaction();
 
 		// then
-		assertEquals(new BigDecimal("12"), average.amount);
+		assertEquals(new BigDecimal("12"), average.getAmount());
 	}
 
 	@Test
-	@Ignore
-	public void testGetAverageTransaction2() {
-		// TASK 0/8 - This test does not work - something is no-yes
+	public void testGetAverageTransactionConsiderOutgoingTransactions() {
+		// given
 		Account account = new Account(new IBAN("asdf"));
-		MoneyTransfer transfer = new MoneyTransfer();
-		transfer.amount = new Money(new BigDecimal("10"), PLN);
-		transfer.number = new IBAN("asdf");
-		account.moneyTransferHistory.add(transfer);
-		WithdrawMoney transfer4 = new WithdrawMoney();
-		transfer4.money = new Money(new BigDecimal("6"), PLN);
-		transfer4.account = account;
-		account.withdrawTransferHistory.add(transfer4);
+
+		MoneyTransfer transfer = new MoneyTransfer("10", PLN);
+		transfer.setOtherIban(new IBAN("asdf"));
+		account.addMoneyTransfer(transfer);
+
+		WithdrawMoney transfer4 = new WithdrawMoney("6", PLN);
+		account.addMoneyTransfer(transfer4);
+
+		// when
 		Money average = account.getAverageTransaction();
-		assertEquals(new BigDecimal("2"), average.amount);
+
+		// then
+		assertEquals(new BigDecimal("2"), average.getAmount());
 	}
 
 	private static class AccountBuilder {
@@ -187,50 +178,45 @@ public class AccountTests {
 		}
 
 		public AccountBuilder withPolishInternalMoneyTransfer(int amount) {
-			return withPolishInternalMoneyTransfer(amount, Direction.TO_ACCOUNT, null);
+			return withPolishInternalMoneyTransfer(amount, MoneyTransferDirection.TO_ACCOUNT, null);
 		}
 
 		public AccountBuilder withPolishMoneyTransfer(int amount) {
-			return withPolishMoneyTransfer(amount, Direction.TO_ACCOUNT, null);
+			return withPolishMoneyTransfer(amount, MoneyTransferDirection.TO_ACCOUNT, null);
 		}
 
-		public AccountBuilder withPolishMoneyTransfer(int amount, Direction direction) {
+		public AccountBuilder withPolishMoneyTransfer(int amount, MoneyTransferDirection direction) {
 			return withPolishMoneyTransfer(amount, direction, null);
 		}
 
-		public AccountBuilder withPolishInternalMoneyTransfer(int amount, Direction direction, String otherIBANNumber) {
-			InternalMoneyTransfer transfer = new InternalMoneyTransfer();
-			transfer.amount = new Money(toBD(amount), PLN);
-			transfer.transferDirection = direction;
-			transfer.number = new IBAN(otherIBANNumber);
-			transfer.account = account;
-			account.internalTransferHistory.add(transfer);
+		public AccountBuilder withPolishInternalMoneyTransfer(int amount, MoneyTransferDirection direction, String otherIBANNumber) {
+			InternalMoneyTransfer transfer = new InternalMoneyTransfer(amount + "", PLN);
+			transfer.setTransferDirection(direction);
+			transfer.otherIBANNumber = new IBAN(otherIBANNumber);
+			account.addMoneyTransfer(transfer);
 			return this;
 		}
 
 		public AccountBuilder withPolishWithdrawMoneyTransfer(int amount) {
 			WithdrawMoney transfer = new WithdrawMoney();
-			transfer.money = new Money(toBD(amount), PLN);
-			transfer.account = account;
-			account.withdrawTransferHistory.add(transfer);
+			transfer.setAmount(new Money(toBD(amount), PLN));
+			account.addMoneyTransfer(transfer);
 			return this;
 		}
 
 		public AccountBuilder withPolishPayInMoneyTransfer(int amount) {
 			PayInMoney transfer = new PayInMoney();
-			transfer.money = new Money(toBD(amount), PLN);
-			transfer.account = account;
-			account.payTransferHistory.add(transfer);
+			transfer.setAmount(new Money(toBD(amount), PLN));
+			account.addMoneyTransfer(transfer);
 			return this;
 		}
 
-		AccountBuilder withPolishMoneyTransfer(int amount, Direction direction, String otherIBANNumber) {
+		AccountBuilder withPolishMoneyTransfer(int amount, MoneyTransferDirection direction, String otherIBANNumber) {
 			MoneyTransfer transfer = new MoneyTransfer();
-			transfer.amount = new Money(toBD(amount), PLN);
-			transfer.transferDirection = direction;
-			transfer.number = new IBAN(otherIBANNumber);
-			transfer.account = account;
-			account.moneyTransferHistory.add(transfer);
+			transfer.setAmount(new Money(toBD(amount), PLN));
+			transfer.setTransferDirection(direction);
+			transfer.setOtherIban(new IBAN(otherIBANNumber));
+			account.addMoneyTransfer(transfer);
 			return this;
 		}
 

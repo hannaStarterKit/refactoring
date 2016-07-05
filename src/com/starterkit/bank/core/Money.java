@@ -1,33 +1,45 @@
 package com.starterkit.bank.core;
 
-import java.util.ArrayList;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Currency;
-import java.util.Iterator;
 
 public class Money {
-	// TASK 1/02 - This code has been written by someone who does not care. To repair it do the following:
-	// reformat
-	// organize imports
-	// remove stupid comments
+
+	private BigDecimal amount;
+	private Currency currency;
 
 	public Money(BigDecimal amount, Currency instance) {
-this.amount = amount;
-currency = instance;
+		this.amount = amount;
+		currency = instance;
 	}
-	BigDecimal amount;
-	Currency currency;
+
+	public Money(Money actual) {
+		this(actual.amount, actual.currency);
+	}
+
+	public static Money noMoney(String currencyCode) {
+		return new Money(BigDecimal.ZERO, Currency.getInstance(currencyCode));
+	}
+
+	public void addMoney(Money money) {
+		amount = amount.add(money.amount);
+	}
+	
+	public void subtractMoney(Money money) {
+		amount = amount.subtract(money.amount);
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	public Currency getCurrency() {
+		return currency;
+	}
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return amount + currency.toString(); 
+		return amount + currency.toString();
 	}
 
-	public static Money noMoney(String string) {
-		// TASK 1/01 - string is not a good argument name, pay attention in the next tasks too
-		return new Money(BigDecimal.ZERO, Currency.getInstance(string));
-	}
-	
 }

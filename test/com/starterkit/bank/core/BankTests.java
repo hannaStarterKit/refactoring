@@ -20,7 +20,7 @@ public class BankTests {
 		Money moneyInBank = bank.getMoneyInBank();
 
 		// then
-		assertEquals(BigDecimal.ZERO, moneyInBank.amount);
+		assertEquals(BigDecimal.ZERO, moneyInBank.getAmount());
 	}
 
 	@Test
@@ -32,7 +32,7 @@ public class BankTests {
 		Money moneyInBank = bank.getMoneyInBank();
 
 		// then
-		assertEquals(new BigDecimal("168"), moneyInBank.amount);
+		assertEquals(new BigDecimal("168"), moneyInBank.getAmount());
 	}
 
 	@Test
@@ -45,24 +45,25 @@ public class BankTests {
 		Money moneyInBank = bank.getMoneyInBank();
 
 		// then
-		assertEquals(new BigDecimal("674"), moneyInBank.amount);
+		assertEquals(new BigDecimal("674"), moneyInBank.getAmount());
 	}
 
 	@Test
 	public void testTransferMoney() {
 		// given
-		Bank bank = BankBuilder.emptyBank().withDummyEuroAccount("IBAN1", "111").withDummyEuroAccount("IBAN2", "222")
+		String iban1 = "IBAN1";
+		String iban2 = "IBAN2";
+		Bank bank = BankBuilder.emptyBank().withDummyEuroAccount(iban1, "111").withDummyEuroAccount(iban2, "222")
 				.build();
-		assertEquals(new BigDecimal("111"), ((Account) bank.accounts.get(0)).getBalance().amount);
-		assertEquals(new BigDecimal("222"), ((Account) bank.accounts.get(1)).getBalance().amount);
-		// TASK 1/10.2 - Introduce a Type
+		assertEquals(new BigDecimal("111"), bank.getAccount(new IBAN(iban1)).getBalance().getAmount());
+		assertEquals(new BigDecimal("222"), bank.getAccount(new IBAN(iban2)).getBalance().getAmount());
 
 		// when
-		bank.giveMoney("IBAN1", "IBAN2", makeEuroMoney("11"));
+		bank.transferMoney(iban1, iban2, makeEuroMoney("11"));
 
 		// then
-		assertEquals(new BigDecimal("100"), ((Account) bank.accounts.get(0)).getBalance().amount);
-		assertEquals(new BigDecimal("233"), ((Account) bank.accounts.get(1)).getBalance().amount);
+		assertEquals(new BigDecimal("100"), bank.getAccount(new IBAN(iban1)).getBalance().getAmount());
+		assertEquals(new BigDecimal("233"), bank.getAccount(new IBAN(iban2)).getBalance().getAmount());
 	}
 
 	private Money makeEuroMoney(String value) {
@@ -78,19 +79,17 @@ public class BankTests {
 		}
 
 		public BankBuilder withDummyEuroAccount(String ibanNumber, String initialBalance, String... monetaryAmounts) {
-			Account account = new Account();
-			account.number = new IBAN(ibanNumber);
+			Account account = new Account(new IBAN(ibanNumber));
 
 			Currency euroCurrency = Currency.getInstance("EUR");
-			account.actual = new Money(new BigDecimal(initialBalance), euroCurrency);
+			account.setActual(new Money(new BigDecimal(initialBalance), euroCurrency));
 
 			for (String textualMonetaryAmount : monetaryAmounts) {
 				PayInMoney payment = new PayInMoney(textualMonetaryAmount, euroCurrency);
-				payment.account = account;
-				account.payTransferHistory.add(payment);
+				account.addMoneyTransfer(payment);
 			}
 
-			bank.accounts.add(account);
+			bank.addAccount(account);
 			return this;
 		}
 
@@ -103,9 +102,8 @@ public class BankTests {
 		}
 
 		BankBuilder withEmptyAccount(String ibanNumber) {
-			Account account = new Account();
-			account.number = new IBAN(ibanNumber);
-			bank.accounts.add(account);
+			Account account = new Account(new IBAN(ibanNumber));
+			bank.addAccount(account);
 			return this;
 		}
 

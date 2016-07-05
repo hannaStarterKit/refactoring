@@ -1,28 +1,26 @@
 package com.starterkit.bank.methods;
 
-import com.starterkit.bank.core.Account;
-import com.starterkit.bank.core.Direction;
+import java.util.Currency;
+
+import com.starterkit.bank.core.MoneyTransferDirection;
 import com.starterkit.bank.core.IBAN;
-import com.starterkit.bank.core.Money;
 
-public class InternalMoneyTransfer {
-	
-	public Direction transferDirection = Direction.TO_ACCOUNT;
-	public Money amount;
-	
-	public Account account;
-	public IBAN number;
-	
+public class InternalMoneyTransfer extends AbstractTransfer {
 
+	public IBAN otherIBANNumber;
 
+	public InternalMoneyTransfer(String monetaryAmount, Currency currency) {
+		super(monetaryAmount, currency);
+		setTransferDirection(MoneyTransferDirection.TO_ACCOUNT);
+	}
+
+	@Override
 	public String asHistorical() {
-		if (transferDirection == Direction.TO_ACCOUNT) {
-			return "FROM> " + number.number + " TO> " + account.number.number + " AMOUNT> "+ amount.toString();
-		}
-		else {
-			return "FROM> " + account.number.number + " TO> " + number.number + " AMOUNT> "+ amount.toString();
+		if (transferDirection == MoneyTransferDirection.TO_ACCOUNT) {
+			return "FROM> " + otherIBANNumber + " TO> " + account.getIBANNumber() + " AMOUNT> " + amount.toString();
+		} else {
+			return "FROM> " + account.getIBANNumber() + " TO> " + otherIBANNumber + " AMOUNT> " + amount.toString();
 		}
 	}
-	
 
 }
